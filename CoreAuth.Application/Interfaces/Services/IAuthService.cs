@@ -6,5 +6,5 @@ namespace CoreAuth.Application.Interfaces.Services;
 public interface IAuthService
 {
     Task<ServiceResult> RegisterAsync(RegisterRequestDto request);
-    Task<ServiceResult> LoginAsync(LoginRequestDto request);
+    Task<ServiceResult<LoginResponseDto>> LoginAsync(LoginRequestDto request);
 }

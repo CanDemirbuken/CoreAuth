@@ -1,5 +1,6 @@
 ﻿using CoreAuth.Application.DTO.Auth;
 using CoreAuth.Application.Interfaces.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CoreAuth.API.Controllers
@@ -18,6 +19,17 @@ namespace CoreAuth.API.Controllers
         {
             var result = await authService.LoginAsync(request);
             return CreateActionResult(result);
+        }
+
+        [Authorize]
+        [HttpGet("test")]
+        public IActionResult Test()
+        {
+            var userId = User.FindFirst("sub")?.Value; // Get the user ID from the JWT token claims
+            var userName = User.FindFirst("nameidentifier")?.Value; // Get the username from the JWT token claims
+            var userEmail = User.FindFirst("email")?.Value; // Get the email from the JWT token claims
+
+            return Ok("You are authorized!");
         }
     }
 }

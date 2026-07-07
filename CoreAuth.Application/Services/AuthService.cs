@@ -1,58 +1,54 @@
 ﻿using CoreAuth.Application.DTO;
 using CoreAuth.Application.DTO.Auth;
+using CoreAuth.Application.DTO.Token;
+using CoreAuth.Application.Interfaces.Identity;
 using CoreAuth.Application.Interfaces.Services;
-using CoreAuth.Domain.Entities;
+using CoreAuth.Application.Interfaces.Token;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 
 namespace CoreAuth.Application.Services;
 
-public class AuthService(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager) : IAuthService
+public class AuthService(IUserIdentityService userIdentityService, ISignInIdentityService signInIdentityService, IJwtTokenService jwtTokenService) : IAuthService
 {
-    public async Task<ServiceResult> LoginAsync(LoginRequestDto request)
+    public async Task<ServiceResult<LoginResponseDto>> LoginAsync(LoginRequestDto request)
     {
-        var user = await userManager.FindByNameAsync(request.UserName);
-        if (user == null)
-            return ServiceResult.Fail("User not found!", StatusCodes.Status404NotFound);
+        var userResult = await userIdentityService.FindByNameAsync(request.UserName);
+
+        if (!userResult.IsSuccess)
+            return ServiceResult<LoginResponseDto>.Fail("User not found!", StatusCodes.Status404NotFound);
+
+        var user = userResult.Data!;
 
         if (!user.IsActive || user.IsDeleted)
-            return ServiceResult.Fail("User account is not active!", StatusCodes.Status403Forbidden);
+            return ServiceResult<LoginResponseDto>.Fail("User account is not active!", StatusCodes.Status403Forbidden);
 
-        //if (!user.EmailConfirmed)
-        //    return ServiceResult.Fail("Email address is not confirmed!", StatusCodes.Status403Forbidden);
+        var passwordResult = await signInIdentityService.CheckPasswordSignInAsync(request.UserName, request.Password, lockoutOnFailure: true);
 
-        var result = await signInManager.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: true);
-        if (!result.Succeeded)
-            return ServiceResult.Fail("Invalid credentials!", StatusCodes.Status401Unauthorized);
+        if (!passwordResult.IsSuccess || !passwordResult.Data!.Succeeded)
+            return ServiceResult<LoginResponseDto>.Fail("Invalid credentials!", StatusCodes.Status401Unauthorized);
 
-        return ServiceResult.Success(StatusCodes.Status200OK);
+        var rolesResult = await userIdentityService.GetRolesByUserIdAsync(user.Id);
+
+        var roles = rolesResult.IsSuccess ? rolesResult.Data! : new List<string>();
+
+        var loginResponse = jwtTokenService.GenerateToken(
+            new TokenGenerateRequestDto(user.Id, user.UserName, user.Email, roles));
+
+        return ServiceResult<LoginResponseDto>.Success(loginResponse, StatusCodes.Status200OK);
     }
 
     public async Task<ServiceResult> RegisterAsync(RegisterRequestDto request)
     {
-        var userWithEmail = await userManager.FindByEmailAsync(request.Email);
-        if (userWithEmail != null)
+        var userWithEmail = await userIdentityService.FindByEmailAsync(request.Email);
+
+        if (userWithEmail.IsSuccess)
             return ServiceResult.Fail("User already exists with this email!", StatusCodes.Status400BadRequest);
 
-        var userWithUserName = await userManager.FindByNameAsync(request.UserName);
-        if (userWithUserName != null)
+        var userWithUserName = await userIdentityService.FindByNameAsync(request.UserName);
+
+        if (userWithUserName.IsSuccess)
             return ServiceResult.Fail("User already exists with this username!", StatusCodes.Status400BadRequest);
 
-        var user = new AppUser
-        {
-            FirstName = request.FirstName,
-            LastName = request.LastName,
-            Email = request.Email,
-            UserName = request.UserName
-        };
-
-        var result = await userManager.CreateAsync(user, request.Password);
-        if (!result.Succeeded)
-        {
-            var errors = result.Errors.Select(x => x.Description).ToList();
-            return ServiceResult.Fail(errors, StatusCodes.Status400BadRequest);
-        }
-
-        return ServiceResult.Success(StatusCodes.Status201Created);
+        return await userIdentityService.CreateAsync(request);
     }
 }
