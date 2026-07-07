@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="CoreAuth.API/CoreAuth.API.csproj" />
+  <Project Path="CoreAuth.Application/CoreAuth.Application.csproj" />
+  <Project Path="CoreAuth.Domain/CoreAuth.Domain.csproj" />
+  <Project Path="CoreAuth.Infrastructure/CoreAuth.Infrastructure.csproj" />
+  <Project Path="CoreAuth.Persistence/CoreAuth.Persistence.csproj" Id="242ef836-40e7-45b7-bbb3-196a1b6b4712" />
+</Solution>
