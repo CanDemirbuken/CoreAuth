@@ -16,6 +16,7 @@ public static class ServiceRegistration
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
+        services.Configure<RefreshTokenSettings>(configuration.GetSection("RefreshTokenSettings"));
 
         var jwtSettings = configuration.GetSection("JwtSettings").Get<JwtSettings>();
 

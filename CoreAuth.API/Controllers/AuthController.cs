@@ -21,6 +21,20 @@ namespace CoreAuth.API.Controllers
             return CreateActionResult(result);
         }
 
+        [HttpPost("refresh-token")]
+        public async Task<IActionResult> RefreshTokenAsync(RefreshTokenRequestDto request)
+        {
+            var result = await authService.RefreshTokenAsync(request);
+            return CreateActionResult(result);
+        }
+
+        [HttpPost("revoke")]
+        public async Task<IActionResult> RevokeAsync(RefreshTokenRequestDto request)
+        {
+            var result = await authService.RevokeAsync(request);
+            return CreateActionResult(result);
+        }
+
         [Authorize]
         [HttpGet("test")]
         public IActionResult Test()

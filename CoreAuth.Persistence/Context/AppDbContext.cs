@@ -7,6 +7,8 @@ namespace CoreAuth.Persistence.Context;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbContext<AppUser>(options)
 {
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
+
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         ApplyAuditRules();

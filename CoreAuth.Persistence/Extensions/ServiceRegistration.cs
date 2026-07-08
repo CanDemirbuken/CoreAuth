@@ -1,5 +1,7 @@
-﻿using CoreAuth.Domain.Entities;
+﻿using CoreAuth.Application.Interfaces.Repositories;
+using CoreAuth.Domain.Entities;
 using CoreAuth.Persistence.Context;
+using CoreAuth.Persistence.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -32,6 +34,9 @@ public static class ServiceRegistration
         })
         .AddEntityFrameworkStores<AppDbContext>()
         .AddDefaultTokenProviders();
+
+        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         return services;
     }

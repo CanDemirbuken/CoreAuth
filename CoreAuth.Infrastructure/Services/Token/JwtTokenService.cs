@@ -1,20 +1,21 @@
-﻿using CoreAuth.Application.DTO.Auth;
-using CoreAuth.Application.DTO.Token;
+﻿using CoreAuth.Application.DTO.Token;
 using CoreAuth.Application.Interfaces.Token;
 using CoreAuth.Infrastructure.Options;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace CoreAuth.Infrastructure.Services.Token
 {
-    public class JwtTokenService(IOptions<JwtSettings> options) : IJwtTokenService
+    public class JwtTokenService(IOptions<JwtSettings> options, IOptions<RefreshTokenSettings> refreshTokenOptions) : IJwtTokenService
     {
         private readonly JwtSettings jwtSettings = options.Value;
+        private readonly RefreshTokenSettings refreshTokenSettings = refreshTokenOptions.Value;
 
-        public LoginResponseDto GenerateToken(TokenGenerateRequestDto request)
+        public AccessTokenGenerateResponseDto GenerateAccessToken(TokenGenerateRequestDto request)
         {
             var claims = new List<Claim>
             {
@@ -43,7 +44,20 @@ namespace CoreAuth.Infrastructure.Services.Token
                 );
 
             var accessToken = new JwtSecurityTokenHandler().WriteToken(token);
-            return new LoginResponseDto(accessToken, expireDate);
+            return new AccessTokenGenerateResponseDto(accessToken, expireDate);
+        }
+
+        public RefreshTokenGenerateResponseDto GenerateRefreshToken()
+        {
+            var randomBytes = new byte[64];
+            using var rng = RandomNumberGenerator.Create();
+            rng.GetBytes(randomBytes);
+
+            var refreshToken = Convert.ToBase64String(randomBytes);
+
+            var expireDate = DateTime.UtcNow.AddDays(refreshTokenSettings.ExpireDays);
+
+            return new RefreshTokenGenerateResponseDto(refreshToken, expireDate);
         }
     }
 }

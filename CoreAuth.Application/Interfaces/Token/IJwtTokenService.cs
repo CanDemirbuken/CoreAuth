@@ -5,5 +5,6 @@ namespace CoreAuth.Application.Interfaces.Token;
 
 public interface IJwtTokenService
 {
-    LoginResponseDto GenerateToken(TokenGenerateRequestDto request);
+    AccessTokenGenerateResponseDto GenerateAccessToken(TokenGenerateRequestDto request);
+    RefreshTokenGenerateResponseDto GenerateRefreshToken();
 }
